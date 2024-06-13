@@ -41,7 +41,7 @@ def get_xy(dataframe, y_label,x_labels=None):
             x = dataframe[x_labels].values
 
     y = dataframe[y_label].values.reshape(-1,1)
-    data = np.stack((x, y))
+    data = {'x': x, 'y': y}
 
     return data, x, y
 
@@ -55,12 +55,37 @@ s = temp_reg.score(x_test_temp, y_test_temp)
 print(s)
 
 #Multiple Linear Regression
-#train, val, test = np.split(df.sample(frac=1), [int(0.6*len(df)), int(0.8*len(df))])
-'''_, x_train_all, y_train_all = get_xy(train, "bike_count", x_labels=df.columns[1:])
+train, val, test = np.split(df.sample(frac=1), [int(0.6*len(df)), int(0.8*len(df))])
+_, x_train_all, y_train_all = get_xy(train, "bike_count", x_labels=df.columns[1:])
 _, x_val_all, y_val_all = get_xy(val, "bike_count", x_labels=df.columns[1:])
 _, x_test_all, y_test_all = get_xy(test, "bike_count", x_labels=df.columns[1:])
 
 all_reg = LinearRegression()
-all_reg.fit(x_train_all, y_train_all)'''
+all_reg.fit(x_train_all, y_train_all)
+all_reg.score(x_test_all, y_test_all)
 
+#Regression with Neural Network
+temp_normalizer = tf.keras.layers.Normalization(input_shape=(1,), axis=None)
+temp_normalizer.adapt(x_train_temp.reshape(-1))
 
+temp_nn_model = tf.keras.Sequential([
+    temp_normalizer,
+    tf.keras.layers.Dense(1)
+])
+
+temp_nn_model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.1), loss='mean_squared_error')
+
+def plot_history(history):
+    plt.plot(history.history['loss'], label='loss')
+    plt.plot(history.history['val_loss'], label='val_loss')
+    plt.xlabel('Epoch')
+    plt.ylabel('MSE')
+    plt.grid(True)
+    plt.show()
+
+history = temp_nn_model.fit(x_train_temp.reshape(-1), y_train_temp,
+                            verbose = 0,
+                            epochs=1000,
+                            validation_data=(x_val_temp, y_val_temp))
+
+plot_history(history)
